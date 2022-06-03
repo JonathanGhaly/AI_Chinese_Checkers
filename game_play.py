@@ -1,4 +1,5 @@
 from cmath import sqrt
+from numpy import mat
 import pygame
 import sys
 from copy import deepcopy
@@ -108,7 +109,11 @@ def TwoPlayers():
         matrix[target[0]][target[1]] = matrix[pos[0]][pos[1]]
         matrix[pos[0]][pos[1]] = 0
 
+    def move2(pos, target, matrixCpy):
+        matrixCpy[target[0]][target[1]] = matrixCpy[pos[0]][pos[1]]
+        matrixCpy[pos[0]][pos[1]] = 0
     # Calculate avg distance
+
     def calculateAvgDistance(playerIndex, matrixCpy):
         xend = 0
         yend = 0
@@ -140,9 +145,9 @@ def TwoPlayers():
                 if(matrix[i][j] != newMatrix[i][j]):
                     x += 1
                     if(newMatrix[i][j] == 0):
-                        movefrom = [16 - i, j]
+                        movefrom = [i, j]
                     else:
-                        moveTo = [16 - i, j]
+                        moveTo = [i, j]
         return [x, movefrom, moveTo]
 
     def minimax(matrixCpy, depth, max_player):
@@ -184,7 +189,7 @@ def TwoPlayers():
                     moves = valid_moves((i, j))
                     for movei in moves:
                         matrixCpy2 = deepcopy(matrixCpy)
-                        move((i, j), movei)
+                        move2((i, j), movei, matrixCpy2)
                         matrices.append(matrixCpy2)
         return matrices
 
@@ -337,7 +342,7 @@ def TwoPlayers():
                                 player_index += 1
                             animation()
             else:
-                newMatrix = minimax(matrix, 2, True)[1]
+                newMatrix = minimax(matrix, 1, True)[1]
                 lz = getMoveNewMatrix(
                     newMatrix)
                 x = lz[0]

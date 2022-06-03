@@ -2,18 +2,18 @@ import pygame
 from tkinter import *
 import pygame_widgets as pw
 import game_play
-import level_selection
 
 
-def window2():
+def window():
+    pygame.quit()
     color_light = (202, 203, 213)
     color_dark = (22, 22, 22)
     pygame.init()
     window = pygame.display.set_mode((900, 600))
-    image = pygame.image.load("Main_Main_Khashab.png")
+    image = pygame.image.load("Main_Enistien.png")
     image = image.convert()
     small_font = pygame.font.Font('Roboto-Bold.ttf', 70)
-    text = small_font.render('Chinese Checkers', True, (0, 0, 0))
+    text = small_font.render('Choose Difficulty', True, (255, 255, 255))
     text_rect = text.get_rect()
     text_rect.center = (460, 110)
     """def quit():
@@ -47,8 +47,9 @@ def window2():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        button("Start", 370, 320, 70, 40, color_dark, color_light, level_selection.window)
-        button("Quit", 450, 320, 70, 40, color_dark, color_light, quit)
+        button("Easy", 340, 320, 80, 40, color_dark, color_light, lambda: game_play.TwoPlayers(1))
+        button("Medium", 430, 320, 80, 40, color_dark, color_light, lambda: game_play.TwoPlayers(3))
+        button("Hard", 520, 320, 80, 40, color_dark, color_light, lambda: game_play.TwoPlayers(5))
 
         pygame.display.update()
         pygame.display.flip()
@@ -56,4 +57,4 @@ def window2():
     pygame.quit()
 
 
-window2()
+window

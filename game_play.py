@@ -1,6 +1,8 @@
+from cmath import sqrt
 import pygame
 import sys
-
+from copy import deepcopy
+import math
 color_light = (202, 203, 213)
 color_dark = (22, 22, 22)
 color_purple = (106, 13, 173)
@@ -18,8 +20,10 @@ def TwoPlayers():
     matrix *= -1
 
     # The Initial positions of the marbles for each of the players
-    first_player = [[0, 12], [1, 11], [1, 13], [2, 10], [2, 12], [2, 14], [3, 9], [3, 11], [3, 13], [3, 15]]
-    second_player = [[16, 12], [15, 11], [15, 13], [14, 10], [14, 12], [14, 14], [13, 9], [13, 11], [13, 13], [13, 15]]
+    first_player = [[0, 12], [1, 11], [1, 13], [2, 10], [
+        2, 12], [2, 14], [3, 9], [3, 11], [3, 13], [3, 15]]
+    second_player = [[16, 12], [15, 11], [15, 13], [14, 10], [
+        14, 12], [14, 14], [13, 9], [13, 11], [13, 13], [13, 15]]
 
     move_index = [[-1, -1], [-1, 1], [0, 2], [1, 1], [1, -1], [0, -2]]
 
@@ -38,7 +42,8 @@ def TwoPlayers():
                 matrix_index[i] -= 1
             else:
                 j -= 1
-                matrix[i][j] = matrix[i][24 - j] = matrix[16 - i][j] = matrix[16 - i][24 - j] = 0
+                matrix[i][j] = matrix[i][24 - j] = matrix[16 -
+                                                          i][j] = matrix[16 - i][24 - j] = 0
                 matrix_index[i] -= 2
             j -= 1
 
@@ -62,13 +67,14 @@ def TwoPlayers():
             for i in range(0, 17):
                 for j in range(0, 25):
                     if matrix[i][j] >= 0:
-                        rect = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                        marble_rect.append(pygame.draw.rect(screen, colors[int(matrix[i][j])], rect, border_radius=20))
+                        rect = pygame.Rect(
+                            j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        marble_rect.append(pygame.draw.rect(
+                            screen, colors[int(matrix[i][j])], rect, border_radius=20))
 
     def valid_moves(coor):
         valid_index = []
         for i in range(len(move_index)):
-
             x = coor[0] + move_index[i][0]
             y = coor[1] + move_index[i][1]
             if -1 < x < 17 and -1 < y < 25:
@@ -94,14 +100,94 @@ def TwoPlayers():
                         if [x3, y3] not in moves_array:
                             if -1 < x3 < 17 and -1 < y3 < 25:
                                 if matrix[x3][y3] > 0:
-                                    check_path(move_index[j], x3, y3, moves_array)
+                                    check_path(
+                                        move_index[j], x3, y3, moves_array)
 
     # Move Function
     def move(pos, target):
         matrix[target[0]][target[1]] = matrix[pos[0]][pos[1]]
         matrix[pos[0]][pos[1]] = 0
 
+    # Calculate avg distance
+    def calculateAvgDistance(playerIndex, matrixCpy):
+        xend = 0
+        yend = 0
+        totalDistance = 0
+        if(playerIndex == 1):
+            xend = 16
+            yend = 12
+        elif(playerIndex == 2):
+            xend = 0
+            yend = 12
+
+        for i in range(len(matrixCpy)):
+            for j in range(len(matrixCpy[i])):
+                if(matrixCpy[i][j] == playerIndex):
+                    totalDistance += math.sqrt(((xend - i)
+                                               ** 2) + ((yend - j)**2))
+        return totalDistance/10
+
+    # calculate score
+    def calculateScore(matrixCpy):
+        return calculateAvgDistance(1, matrixCpy) - calculateAvgDistance(2, matrixCpy)
+
+    def getMoveNewMatrix(newMatrix=[]):
+        movefrom = []
+        moveTo = []
+        x = 0
+        for i in range(len(newMatrix)):
+            for j in range(len(newMatrix[i])):
+                if(matrix[i][j] != newMatrix[i][j]):
+                    x += 1
+                    if(newMatrix[i][j] == 0):
+                        movefrom = [16 - i, j]
+                    else:
+                        moveTo = [16 - i, j]
+        return [x, movefrom, moveTo]
+
+    def minimax(matrixCpy, depth, max_player):
+        if depth == 0 or winner():
+            return calculateScore(matrixCpy), matrixCpy
+        playerIndex = 0
+        if(max_player):
+            playerIndex = 2
+        else:
+            playerIndex = 1
+        if max_player:
+            maxEval = float('-inf')
+            best_move = None
+            for state in get_all_picecs_moves(matrixCpy, playerIndex):
+                score = minimax(state, depth-1, False)[0]
+                maxEval = max(maxEval, score)
+                if maxEval == score:
+                    best_move = state
+
+            return maxEval, best_move
+        else:
+            minEval = float('inf')
+            best_move = None
+            for state in get_all_picecs_moves(matrixCpy, playerIndex):
+                score = minimax(state, depth-1, True)[0]
+                minEval = min(minEval, score)
+                if minEval == score:
+                    best_move = state
+            return minEval, best_move
     # the coordinates relative to the grid
+
+    # get all
+
+    def get_all_picecs_moves(matrixCpy, playerIndex):
+        matrices = []
+        for i in range(len(matrixCpy)):
+            for j in range(len(matrixCpy[i])):
+                if(matrix[i][j] == playerIndex):
+                    moves = valid_moves((i, j))
+                    for movei in moves:
+                        matrixCpy2 = deepcopy(matrixCpy)
+                        move((i, j), movei)
+                        matrices.append(matrixCpy2)
+        return matrices
+
     def get_token_coor(x, y):
         grid_width = 0
         grid_heigth = 0
@@ -115,18 +201,23 @@ def TwoPlayers():
         for i in range(0, 17):
             for j in range(0, 25):
                 if matrix[i][j] >= 0:
-                    rect = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                    marble_rect.append(pygame.draw.rect(screen, colors[int(matrix[i][j])], rect, border_radius=20))
+                    rect = pygame.Rect(j * CELL_SIZE, i *
+                                       CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    marble_rect.append(pygame.draw.rect(
+                        screen, colors[int(matrix[i][j])], rect, border_radius=20))
                 if [i, j] in moves:
                     test_circle = pygame.image.load('circle.png')
-                    test_circle = pygame.transform.scale(test_circle, (CELL_SIZE+2, CELL_SIZE+2))
-                    screen.blit(test_circle, (j * CELL_SIZE - 1 , i * CELL_SIZE-1))
+                    test_circle = pygame.transform.scale(
+                        test_circle, (CELL_SIZE+2, CELL_SIZE+2))
+                    screen.blit(
+                        test_circle, (j * CELL_SIZE - 1, i * CELL_SIZE-1))
 
     # Draw grid
     def show_grid():
         for i in range(0, nb_col):
             for j in range(0, nb_ligne):
-                rect = pygame.Rect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                rect = pygame.Rect(i * CELL_SIZE, j *
+                                   CELL_SIZE, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(screen, pygame.Color("white"), rect, width=1)
 
     # function to add text to the screen
@@ -148,11 +239,13 @@ def TwoPlayers():
                 first = False
                 break
         if second == True:
-            WriteText('Player 2 had won!', nb_col * CELL_SIZE - 370, nb_ligne * CELL_SIZE - 130, 50, color_green)
+            WriteText('Player 2 had won!', nb_col * CELL_SIZE - 370,
+                      nb_ligne * CELL_SIZE - 130, 50, color_green)
             return True
 
         elif first == True:
-            WriteText('Player 1 had won!', nb_col * CELL_SIZE - 370, nb_ligne * CELL_SIZE - 130, 50, color_purple)
+            WriteText('Player 1 had won!', nb_col * CELL_SIZE - 370,
+                      nb_ligne * CELL_SIZE - 130, 50, color_purple)
             return True
         else:
             return False
@@ -163,7 +256,8 @@ def TwoPlayers():
     nb_col = 25
     nb_ligne = 25
     CELL_SIZE = 20
-    screen = pygame.display.set_mode(size=(nb_col * CELL_SIZE, nb_ligne * CELL_SIZE))
+    screen = pygame.display.set_mode(
+        size=(nb_col * CELL_SIZE, nb_ligne * CELL_SIZE))
     timer = pygame.time.Clock()
     game_on = True
     marble_rect = []
@@ -196,49 +290,72 @@ def TwoPlayers():
 
     while game_on:
         # player turn
-        if player_index == 2: col = color_green
-        if player_index == 1: col = color_purple
+        if player_index == 2:
+            col = color_green
+        if player_index == 1:
+            col = color_purple
         if (winner() == False):
             WriteText('Player ' + str(player_index) + '\'s Turn', nb_col * CELL_SIZE - 370, nb_ligne * CELL_SIZE - 100,
                       50, col)
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             # TODO add condition if index == 1 else add the AI
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-
-                # get a list of all sprites that are under the mouse cursor
-                clicked_sprites = [s for s in marble_rect if s.collidepoint(pos)]
-                if clicked_sprites:
-                    clicked_token = get_token_coor(clicked_sprites[0].x, clicked_sprites[0].y)
-                    if matrix[clicked_token[0], clicked_token[1]] == player_index:
-                        if clicked_token == last_selected_token:
+            if(player_index == 1):
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    # get a list of all sprites that are under the mouse cursor
+                    clicked_sprites = [
+                        s for s in marble_rect if s.collidepoint(pos)]
+                    if clicked_sprites:
+                        clicked_token = get_token_coor(
+                            clicked_sprites[0].x, clicked_sprites[0].y)
+                        if matrix[clicked_token[0], clicked_token[1]] == player_index:
+                            if clicked_token == last_selected_token:
+                                is_selecting = False
+                                last_selected_token = []
+                                player_valid_moves = []
+                                screen.fill(pygame.Color(color_dark))
+                                animation()
+                            else:
+                                player_valid_moves = valid_moves(clicked_token)
+                                last_selected_token = clicked_token
+                                is_selecting = True
+                                screen.fill(pygame.Color(color_dark))
+                                animation(player_valid_moves,
+                                          last_selected_token)
+                        elif clicked_token in player_valid_moves:
+                            move(last_selected_token, clicked_token)
+                            winner()
                             is_selecting = False
                             last_selected_token = []
                             player_valid_moves = []
                             screen.fill(pygame.Color(color_dark))
+                            player_index = (player_index + 1) % 3
+                            if player_index == 0:
+                                player_index += 1
                             animation()
-                        else:
-                            player_valid_moves = valid_moves(clicked_token)
-                            last_selected_token = clicked_token
-                            is_selecting = True
-                            screen.fill(pygame.Color(color_dark))
-                            animation(player_valid_moves, last_selected_token)
-                    elif clicked_token in player_valid_moves:
-                        move(last_selected_token, clicked_token)
-                        winner()
-                        is_selecting = False
-                        last_selected_token = []
-                        player_valid_moves = []
-                        screen.fill(pygame.Color(color_dark))
-                        player_index = (player_index + 1) % 3
-                        if player_index == 0:
-                            player_index += 1
-
-                        animation()
+            else:
+                newMatrix = minimax(matrix, 2, True)[1]
+                lz = getMoveNewMatrix(
+                    newMatrix)
+                x = lz[0]
+                last_selected_token = lz[1]
+                clicked_token = lz[2]
+                print(x)
+                print(last_selected_token)
+                print(clicked_token)
+                move(last_selected_token, clicked_token)
+                winner()
+                is_selecting = False
+                last_selected_token = []
+                player_valid_moves = []
+                screen.fill(pygame.Color(color_dark))
+                player_index = (player_index + 1) % 3
+                if player_index == 0:
+                    player_index += 1
+                animation()
 
         pygame.display.update()
         timer.tick(60)

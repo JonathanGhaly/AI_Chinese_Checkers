@@ -143,20 +143,25 @@ def TwoPlayers(level):
 
     def calculateYend(matrixCpy, playerIndex):
         unoccupied = 0
+        unoccupiedw2 = 0
         yend = 0
         if playerIndex == 1:
             for pos in second_player:
                 if matrixCpy[pos[0]][pos[1]] != playerIndex:
-                    unoccupied += 1
-                    yend += pos[1]
+                    unoccupied += (matrixCpy[pos[0]][pos[1]] != 0)
+                    unoccupiedw2 += (matrixCpy[pos[0]][pos[1]] == 0)
+                    yend += pos[1] + pos[1] * \
+                        (19*(matrixCpy[pos[0]][pos[1]] == 0))
         elif playerIndex == 2:
             for pos in first_player:
                 if matrixCpy[pos[0]][pos[1]] != playerIndex:
-                    unoccupied += 1
-                    yend += pos[1]
-        if unoccupied == 0:
+                    unoccupied += (matrixCpy[pos[0]][pos[1]] != 0)
+                    unoccupiedw2 += (matrixCpy[pos[0]][pos[1]] == 0)
+                    yend += pos[1] + pos[1] * \
+                        (19*(matrixCpy[pos[0]][pos[1]] == 0))
+        if unoccupied == 0 and unoccupiedw2 == 0:
             return 12
-        yend /= unoccupied
+        yend /= (unoccupied + 20*unoccupiedw2)
         if yend <= 12.5:
             return 12
         else:
@@ -402,7 +407,7 @@ def TwoPlayers(level):
                             animation()
             else:
                 if not winnerCpy(matrix):
-                    newMatrix = minimax(matrix, level, True)[1]
+                    newMatrix = minimax(matrix, 2, True)[1]
                     lz = getMoveNewMatrix(
                         newMatrix)
                     x = lz[0]

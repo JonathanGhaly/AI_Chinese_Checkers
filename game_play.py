@@ -130,33 +130,37 @@ def TwoPlayers(level):
         totalDistance = 0
         if (playerIndex == 1):
             xend = 18
-            yend = 12
         elif (playerIndex == 2):
             xend = -2
-            yend = 12
 
         for i in range(len(matrixCpy)):
             for j in range(len(matrixCpy[i])):
                 if (matrixCpy[i][j] == playerIndex):
-                    # minDist = float("inf")
-                    # if playerIndex == 2:
-                    #     for pos in first_player:
-                    #         if fullyOccupiedCol(playerIndex, pos[1], matrixCpy):
-                    #             continue
-                    #         if(j - pos[1] < minDist):
-                    #             minDist = j - pos[1]
-                    #             yend = pos[1]
-                    # else:
-                    #     for pos in second_player:
-                    #         if fullyOccupiedCol(playerIndex, pos[1], matrixCpy):
-                    #             continue
-                    #         if(j - pos[1] < minDist):
-                    #             minDist = j - pos[1]
-                    #             yend = pos[1]
-
+                    yend = calculateYend(matrixCpy, playerIndex)
                     totalDistance += math.sqrt(((xend - i)
                                                 ** 2) + ((yend - j) ** 2))
         return totalDistance / 10
+
+    def calculateYend(matrixCpy, playerIndex):
+        unoccupied = 0
+        yend = 0
+        if playerIndex == 1:
+            for pos in second_player:
+                if matrixCpy[pos[0]][pos[1]] != playerIndex:
+                    unoccupied += 1
+                    yend += pos[1]
+        elif playerIndex == 2:
+            for pos in first_player:
+                if matrixCpy[pos[0]][pos[1]] != playerIndex:
+                    unoccupied += 1
+                    yend += pos[1]
+        if unoccupied == 0:
+            return 12
+        yend /= unoccupied
+        if yend <= 12.5:
+            return 12
+        else:
+            return 13
 
     # calculate score
     def calculateScore(matrixCpy):

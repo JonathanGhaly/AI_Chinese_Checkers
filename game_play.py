@@ -407,7 +407,7 @@ def TwoPlayers(level):
                             animation()
             else:
                 if not winnerCpy(matrix):
-                    newMatrix = minimax(matrix, 2, True)[1]
+                    newMatrix = minimax(matrix, level, True)[1]
                     lz = getMoveNewMatrix(
                         newMatrix)
                     x = lz[0]

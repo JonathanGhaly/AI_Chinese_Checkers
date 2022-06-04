@@ -110,22 +110,50 @@ def TwoPlayers(level):
         matrixCpy[target[0]][target[1]] = matrixCpy[pos[0]][pos[1]]
         matrixCpy[pos[0]][pos[1]] = 0
 
-    # Calculate avg distance
+    def fullyOccupiedCol(playerIndex, col, matrixCpy):
+        if(playerIndex == 2):
+            for pos in first_player:
+                if pos[1] == col:
+                    if matrixCpy[pos[0]][pos[1]] != playerIndex:
+                        return False
+        elif (playerIndex == 1):
+            for pos in second_player:
+                if pos[1] == col:
+                    if matrixCpy[pos[0]][pos[1]] != playerIndex:
+                        return False
+        return True
 
+    # Calculate avg distance
     def calculateAvgDistance(playerIndex, matrixCpy):
         xend = 0
         yend = 0
         totalDistance = 0
         if (playerIndex == 1):
-            xend = 16
+            xend = 18
             yend = 12
         elif (playerIndex == 2):
-            xend = 0
+            xend = -2
             yend = 12
 
         for i in range(len(matrixCpy)):
             for j in range(len(matrixCpy[i])):
                 if (matrixCpy[i][j] == playerIndex):
+                    # minDist = float("inf")
+                    # if playerIndex == 2:
+                    #     for pos in first_player:
+                    #         if fullyOccupiedCol(playerIndex, pos[1], matrixCpy):
+                    #             continue
+                    #         if(j - pos[1] < minDist):
+                    #             minDist = j - pos[1]
+                    #             yend = pos[1]
+                    # else:
+                    #     for pos in second_player:
+                    #         if fullyOccupiedCol(playerIndex, pos[1], matrixCpy):
+                    #             continue
+                    #         if(j - pos[1] < minDist):
+                    #             minDist = j - pos[1]
+                    #             yend = pos[1]
+
                     totalDistance += math.sqrt(((xend - i)
                                                 ** 2) + ((yend - j) ** 2))
         return totalDistance / 10
@@ -149,7 +177,7 @@ def TwoPlayers(level):
         return [x, movefrom, moveTo]
 
     def minimax(matrixCpy, depth, max_player):
-        if depth == 0 or winner():
+        if depth == 0 or winnerCpy(matrixCpy):
             return calculateScore(matrixCpy), matrixCpy
         playerIndex = 0
         if (max_player):
@@ -254,6 +282,18 @@ def TwoPlayers(level):
         else:
             return False
 
+    def winnerCpy(matrixCpy):
+        first = True
+        second = True
+        for i in range(len(first_player)):
+            if matrixCpy[first_player[i][0]][first_player[i][1]] != 2:
+                second = False
+                break
+        for i in range(len(second_player)):
+            if matrixCpy[second_player[i][0]][second_player[i][1]] != 1:
+                first = False
+                break
+        return first or second
     add_player(1)
     add_player(2)
     # game window display
@@ -291,21 +331,34 @@ def TwoPlayers(level):
         textSurf, textRect = text_objects(msg, smallText)
         textRect.center = ((x + (w / 2)), (y + (h / 2)))
         screen.blit(textSurf, textRect)
-
+    playerwon = False
+    AiWon = False
     while game_on:
         # player turn
         if player_index == 2:
-            col = "red"
-        if player_index == 1:
             col = "green"
-        if (winner() == False):
+        if player_index == 1:
+            col = "red"
+        if (not winnerCpy(matrix)):
             WriteText('Player ' + str(player_index) + '\'s Turn', nb_col * CELL_SIZE - 370, nb_ligne * CELL_SIZE - 100,
                       50, col)
+        else:
+            if playerwon:
+                col = "red"
+                WriteText('Player Wins', nb_col * CELL_SIZE - 370,
+                          nb_ligne * CELL_SIZE - 100,
+                          50, col)
+            else:
+                col = "green"
+                WriteText('AI Wins', nb_col * CELL_SIZE - 370,
+                          nb_ligne * CELL_SIZE - 100,
+                          50, col)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if (player_index == 1):
+            if (player_index == 1 and not winnerCpy(matrix)):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     # get a list of all sprites that are under the mouse cursor
@@ -330,12 +383,11 @@ def TwoPlayers(level):
                                           last_selected_token)
                         elif clicked_token in player_valid_moves:
                             move(last_selected_token, clicked_token)
-                            winner()
-                            if winner():
+                            if winnerCpy(matrix):
                                 WriteText('Player Wins', nb_col * CELL_SIZE - 370,
                                           nb_ligne * CELL_SIZE - 100,
                                           50, col)
-                                break
+                                playerwon = True
                             is_selecting = False
                             last_selected_token = []
                             player_valid_moves = []
@@ -345,7 +397,7 @@ def TwoPlayers(level):
                                 player_index += 1
                             animation()
             else:
-                if not winner():
+                if not winnerCpy(matrix):
                     newMatrix = minimax(matrix, level, True)[1]
                     lz = getMoveNewMatrix(
                         newMatrix)
@@ -353,11 +405,11 @@ def TwoPlayers(level):
                     last_selected_token = lz[1]
                     clicked_token = lz[2]
                     move(last_selected_token, clicked_token)
-                    if winner():
+                    if winnerCpy(matrix):
                         WriteText('AI Wins', nb_col * CELL_SIZE - 370,
                                   nb_ligne * CELL_SIZE - 100,
                                   50, col)
-                        break
+                        AiWon = True
                     is_selecting = False
                     last_selected_token = []
                     player_valid_moves = []
